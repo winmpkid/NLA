@@ -1,14 +1,43 @@
-# NLA — Numerical Linear Algebra
+# Numerical Linear Algebra: Stability, Conditioning, and Matrix Factorization Experiments
 
-This repository is a learning-oriented collection of Jupyter notebooks for numerical linear algebra. Each notebook connects the mathematical derivation of an algorithm with a NumPy implementation, numerical verification, visual experiments, and practical applications.
+This project investigates the numerical stability and computational behavior of fundamental matrix factorization algorithms. From-scratch implementations are used to study how pivoting, conditioning, orthogonalization methods, and normal-equation formulations affect numerical accuracy.
 
-The emphasis is not only on obtaining an answer, but also on understanding:
+Rather than presenting matrix decompositions as isolated formulas, the repository treats LU, Cholesky, QR, least-squares, and SVD algorithms as controlled computational experiments. Every method is evaluated through residuals, forward errors, orthogonality loss, runtime scaling, or sensitivity to ill-conditioning.
 
-- why an algorithm works;
-- which matrix properties it requires;
-- how to verify a factorization numerically;
-- how rounding error and conditioning affect the result;
-- when one numerical method is preferable to another.
+## Core Experimental Results
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/figures/lu-pivoting-stability.png" alt="LU pivoting stability experiment">
+      <br><sub><b>Pivoting:</b> partial pivoting prevents a small leading pivot from amplifying rounding error.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/figures/cholesky-lu-runtime.png" alt="Cholesky and LU runtime comparison">
+      <br><sub><b>Structure:</b> Cholesky exploits symmetry and positive definiteness to reduce factorization cost.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/figures/qr-orthogonality-stability.png" alt="QR orthogonality stability comparison">
+      <br><sub><b>Orthogonalization:</b> Householder QR retains near-machine-precision orthogonality as conditioning worsens.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/figures/svd-conditioning-stability.png" alt="SVD conditioning experiment">
+      <br><sub><b>Conditioning:</b> forming A<sup>T</sup>A squares the condition number and damages the smallest singular values.</sub>
+    </td>
+  </tr>
+</table>
+
+## Questions Investigated
+
+- How does partial pivoting change the forward and backward stability of LU factorization?
+- When does exploiting symmetric positive-definite structure make Cholesky preferable to LU?
+- How quickly do classical and modified Gram–Schmidt lose orthogonality as the condition number grows?
+- Why are Householder transformations more stable for QR factorization and least-squares problems?
+- How does the normal-equation formulation amplify conditioning problems?
+- When does computing SVD through $A^TA$ lose numerical rank or small singular-value information?
+- How do weighted least squares and ridge regularization alter estimation under heteroscedasticity and multicollinearity?
 
 ## Notebook Overview
 
@@ -18,7 +47,7 @@ The emphasis is not only on obtaining an answer, but also on understanding:
 | [Cholesky Decomposition](src/Cholesky%20decomposition.ipynb) | Factorization of symmetric positive-definite matrices, triangular solves | Verification, solving $Ax=b$, explanation of why pivoting is unnecessary, comparison with LU |
 | [Least Squares](src/Least%20Squares.ipynb) | Normal equations, Cholesky solution, ordinary least squares, weighted least squares, ridge regression | Regression datasets, residual analysis, model comparison, coefficient visualization |
 | [QR Decomposition](src/QR%20decomposition.ipynb) | Classical Gram–Schmidt, modified Gram–Schmidt, Householder reflections | Factorization and orthogonality errors, QR least squares, stability comparison on ill-conditioned matrices |
-| [SVD Decomposition](src/SVD%20decomposition.ipynb) | Singular values and vectors, educational eigendecomposition-based SVD, pseudoinverse | Rank detection, SVD least squares, low-rank approximation, PCA, condition-number experiments |
+| [SVD Decomposition](src/SVD%20decomposition.ipynb) | Singular values and vectors, eigendecomposition-based SVD, pseudoinverse | Rank detection, SVD least squares, low-rank approximation, PCA, condition-number experiments |
 
 ## Repository Structure
 
@@ -26,8 +55,15 @@ The emphasis is not only on obtaining an answer, but also on understanding:
 NLA/
 ├── README.md
 ├── docs/
+│   ├── figures/
+│   │   ├── cholesky-lu-runtime.png
+│   │   ├── lu-pivoting-stability.png
+│   │   ├── qr-orthogonality-stability.png
+│   │   └── svd-conditioning-stability.png
 │   ├── formula.png
 │   └── least_squares_practice_datasets.xlsx
+├── scripts/
+│   └── generate_readme_figures.py
 └── src/
     ├── LU decomposition.ipynb
     ├── Cholesky decomposition.ipynb
@@ -88,7 +124,7 @@ The SVD notebook studies
 
 $$A = U\Sigma V^T.$$
 
-It contains an educational implementation based on the eigenvalue decomposition of $A^TA$, together with reconstruction and orthogonality checks. Later sections use a numerically reliable direct SVD for practical computations, including:
+It contains a from-scratch implementation based on the eigenvalue decomposition of $A^TA$, together with reconstruction and orthogonality checks. Later sections use a numerically reliable direct SVD for practical computations, including:
 
 - numerical-rank detection;
 - the Moore–Penrose pseudoinverse;
@@ -168,9 +204,9 @@ Alternatively, use the classic Notebook interface:
 jupyter notebook
 ```
 
-## Recommended Learning Path
+## Experiment Reproduction Order
 
-The notebooks are easiest to study in this order:
+The experiments build on one another most naturally in this order:
 
 1. **LU decomposition** — elimination, triangular matrices, and linear-system solving.
 2. **Cholesky decomposition** — using symmetry and positive definiteness for a faster factorization.
@@ -178,7 +214,17 @@ The notebooks are easiest to study in this order:
 4. **QR decomposition** — orthogonal transformations and more stable least-squares solutions.
 5. **SVD decomposition** — rank, pseudoinverses, ill-conditioning, low-rank models, and PCA.
 
-For each notebook, run the cells from top to bottom. Pay particular attention to the verification quantities rather than comparing printed matrices alone.
+For each notebook, run the cells from top to bottom. The primary outputs are the verification quantities and stability plots rather than the printed factors alone.
+
+## Reproducing the README Figures
+
+The four summary figures at the top of this README are generated from deterministic experiments that mirror the notebook implementations. After installing the dependencies, regenerate them from the repository root with:
+
+```bash
+python scripts/generate_readme_figures.py
+```
+
+The script writes the PNG files to `docs/figures/`. Runtime values may vary by machine, but the qualitative trends should remain consistent.
 
 ## Numerical Verification
 
@@ -204,7 +250,7 @@ For a well-conditioned example, errors close to machine precision (approximately
 
 ## Notes
 
-- The from-scratch implementations are intended for education and comparison, not as replacements for optimized numerical libraries.
+- The from-scratch implementations are designed for controlled numerical experiments and algorithm comparison, not as replacements for optimized numerical libraries.
 - Production code should generally prefer routines such as `numpy.linalg.solve`, `numpy.linalg.qr`, `numpy.linalg.svd`, and the corresponding SciPy functions.
 - Singular vectors and QR column signs are not unique. Two valid factorizations may therefore contain columns with opposite signs while reconstructing the same matrix.
 - Notebook plots may vary slightly across platforms because of differences in package versions and floating-point libraries.
